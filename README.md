@@ -10,12 +10,15 @@ This is useful if you maintain a folder structure for upcoming shows (with subti
 
 ## Installation
 
-1. Download or build the plugin DLL
-2. Copy it to your Jellyfin plugins directory:
+### From release (recommended)
+
+1. Download the latest `ignore-empty-folders-X.X.X.zip` from [Releases](../../releases)
+2. Create a plugin directory in your Jellyfin config:
    ```
-   /config/plugins/Ignore Empty Folders_1.0.0.0/Jellyfin.Plugin.IgnoreEmptyFolders.dll
+   /config/plugins/Ignore Empty Folders_{version}/
    ```
-3. Restart Jellyfin
+3. Extract the ZIP contents (DLL + `meta.json`) into that directory
+4. Restart Jellyfin
 
 ### Building from source
 
@@ -25,7 +28,10 @@ Requires .NET 9 SDK:
 dotnet build -c Release
 ```
 
-The DLL is output to `Jellyfin.Plugin.IgnoreEmptyFolders/bin/Release/net9.0/`.
+The DLL is output to `Jellyfin.Plugin.IgnoreEmptyFolders/bin/Release/net9.0/`. Copy it to:
+```
+/config/plugins/Ignore Empty Folders_1.0.0.0/Jellyfin.Plugin.IgnoreEmptyFolders.dll
+```
 
 ## Configuration
 
