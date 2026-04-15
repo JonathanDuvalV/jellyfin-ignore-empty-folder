@@ -15,10 +15,10 @@ This is useful if you maintain a folder structure for upcoming shows (with subti
 Add this repository URL in **Dashboard > Plugins > Repositories**:
 
 ```
-https://{owner}.github.io/jellyfin-ignore-empty-folder/repository.json
+https://jonathanduvalv.github.io/jellyfin-ignore-empty-folder/repository.json
 ```
 
-Replace `{owner}` with the GitHub username/org hosting this plugin. Once added, the plugin will appear in the plugin catalog and can be installed and updated directly from the Dashboard.
+Once added, the plugin will appear in the plugin catalog and can be installed and updated directly from the Dashboard.
 
 ### Manual installation
 
