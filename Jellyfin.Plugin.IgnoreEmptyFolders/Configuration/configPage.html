@@ -58,7 +58,7 @@
                         config.Enabled = document.querySelector('#Enabled').checked;
                         config.LogDeletions = document.querySelector('#LogDeletions').checked;
                         ApiClient.updatePluginConfiguration(PluginConfig.pluginId, config).then(function () {
-                            Dashboard.processPluginConfigurationUpdateResult;
+                            Dashboard.processPluginConfigurationUpdateResult();
                             Dashboard.hideLoadingMsg();
                         });
                     });

@@ -18,8 +18,10 @@ public class CleanEmptySeriesPostScanTask : ILibraryPostScanTask
 
     public Task Run(IProgress<double> progress, CancellationToken cancellationToken)
     {
-        var cleaner = new EmptySeriesCleaner(_libraryManager, _logger);
-        cleaner.CleanEmptySeries(progress, cancellationToken);
-        return Task.CompletedTask;
+        return Task.Run(() =>
+        {
+            var cleaner = new EmptySeriesCleaner(_libraryManager, _logger);
+            cleaner.CleanEmptySeries(progress, cancellationToken);
+        }, cancellationToken);
     }
 }

@@ -71,16 +71,22 @@ public class EmptySeriesCleaner
             if (logDeletions)
             {
                 _logger.LogInformation(
-                    "Ignore Empty Folders: Removing series \"{SeriesName}\" (path: {Path}) - no video files found",
-                    series.Name,
-                    series.Path);
+                    "Ignore Empty Folders: Removing series \"{SeriesName}\" - no video files found",
+                    series.Name);
             }
 
-            _libraryManager.DeleteItem(
-                series,
-                new DeleteOptions { DeleteFileLocation = false });
+            try
+            {
+                _libraryManager.DeleteItem(
+                    series,
+                    new DeleteOptions { DeleteFileLocation = false });
 
-            removedCount++;
+                removedCount++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Ignore Empty Folders: Failed to remove series \"{SeriesName}\"", series.Name);
+            }
             progress?.Report((double)(i + 1) / total * 100);
         }
 
