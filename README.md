@@ -10,7 +10,17 @@ This is useful if you maintain a folder structure for upcoming shows (with subti
 
 ## Installation
 
-### From release (recommended)
+### From plugin repository (recommended)
+
+Add this repository URL in **Dashboard > Plugins > Repositories**:
+
+```
+https://{owner}.github.io/jellyfin-ignore-empty-folder/repository.json
+```
+
+Replace `{owner}` with the GitHub username/org hosting this plugin. Once added, the plugin will appear in the plugin catalog and can be installed and updated directly from the Dashboard.
+
+### Manual installation
 
 1. Download the latest `ignore-empty-folders-X.X.X.zip` from [Releases](../../releases)
 2. Create a plugin directory in your Jellyfin config:
@@ -68,4 +78,3 @@ The plugin only removes entries from Jellyfin's database. Your folder structure,
 
 - Empty series will briefly appear during a library scan before the post-scan task removes them
 - If the plugin is disabled or uninstalled, empty series will reappear on the next scan
-- The "An error occurred while getting the plugin details from the repository" message in the dashboard is normal for manually-installed plugins

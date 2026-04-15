@@ -6,10 +6,18 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
 
     steps:
       - uses: actions/checkout@v4
@@ -29,9 +37,16 @@ jobs:
             -c Release \
             -p:Version=${{ steps.version.outputs.VERSION }}
 
+      - name: Package release
+        run: |
+          mkdir -p staging
+          cp Jellyfin.Plugin.IgnoreEmptyFolders/bin/Release/net9.0/Jellyfin.Plugin.IgnoreEmptyFolders.dll staging/
+          cd staging
+          zip -r ../ignore-empty-folders-${{ steps.version.outputs.VERSION }}.zip .
+
       - name: Generate meta.json
         run: |
-          cat > meta.json <<EOF
+          cat > staging/meta.json <<EOF
           {
             "guid": "b3e4f5a6-7890-4abc-def0-123456789abc",
             "name": "Ignore Empty Folders",
@@ -39,26 +54,40 @@ jobs:
             "overview": "Automatically hides TV shows that have no video files in their folders.",
             "owner": "skyze",
             "category": "Library",
-            "versions": [
-              {
-                "version": "${{ steps.version.outputs.VERSION }}",
-                "changelog": "Release ${{ steps.version.outputs.VERSION }}",
-                "targetAbi": "10.11.0.0",
-                "sourceUrl": "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ignore-empty-folders-${{ steps.version.outputs.VERSION }}.zip",
-                "checksum": "$(sha256sum Jellyfin.Plugin.IgnoreEmptyFolders/bin/Release/net9.0/Jellyfin.Plugin.IgnoreEmptyFolders.dll | cut -d' ' -f1)",
-                "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-              }
-            ]
+            "targetAbi": "10.11.0.0",
+            "version": "${{ steps.version.outputs.VERSION }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "autoUpdate": true,
+            "assemblies": ["Jellyfin.Plugin.IgnoreEmptyFolders.dll"]
           }
           EOF
 
-      - name: Package release
+      - name: Generate repository manifest
         run: |
-          mkdir -p staging
-          cp Jellyfin.Plugin.IgnoreEmptyFolders/bin/Release/net9.0/Jellyfin.Plugin.IgnoreEmptyFolders.dll staging/
-          cp meta.json staging/
-          cd staging
-          zip -r ../ignore-empty-folders-${{ steps.version.outputs.VERSION }}.zip .
+          CHECKSUM=$(md5sum ignore-empty-folders-${{ steps.version.outputs.VERSION }}.zip | cut -d' ' -f1)
+          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          cat > repository.json <<EOF
+          [
+            {
+              "guid": "b3e4f5a6-7890-4abc-def0-123456789abc",
+              "name": "Ignore Empty Folders",
+              "description": "Automatically hides TV shows that have no video files in their folders.",
+              "overview": "Automatically hides TV shows that have no video files in their folders.",
+              "owner": "skyze",
+              "category": "Library",
+              "versions": [
+                {
+                  "version": "${{ steps.version.outputs.VERSION }}",
+                  "changelog": "Release ${{ steps.version.outputs.VERSION }}",
+                  "targetAbi": "10.11.0.0",
+                  "sourceUrl": "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ignore-empty-folders-${{ steps.version.outputs.VERSION }}.zip",
+                  "checksum": "${CHECKSUM}",
+                  "timestamp": "${TIMESTAMP}"
+                }
+              ]
+            }
+          ]
+          EOF
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
@@ -68,3 +97,35 @@ jobs:
           files: |
             ignore-empty-folders-${{ steps.version.outputs.VERSION }}.zip
             staging/meta.json
+            repository.json
+
+      - name: Upload repository manifest for Pages
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-manifest
+          path: repository.json
+
+  deploy-pages:
+    needs: release
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Download repository manifest
+        uses: actions/download-artifact@v4
+        with:
+          name: repository-manifest
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
