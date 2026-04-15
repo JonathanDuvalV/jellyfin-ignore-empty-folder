@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build plugin
+        run: |
+          dotnet build Jellyfin.Plugin.IgnoreEmptyFolders/Jellyfin.Plugin.IgnoreEmptyFolders.csproj \
+            -c Release \
+            -p:Version=${{ steps.version.outputs.VERSION }}
+
+      - name: Generate meta.json
+        run: |
+          cat > meta.json <<EOF
+          {
+            "guid": "b3e4f5a6-7890-4abc-def0-123456789abc",
+            "name": "Ignore Empty Folders",
+            "description": "Automatically hides TV shows that have no video files in their folders.",
+            "overview": "Automatically hides TV shows that have no video files in their folders.",
+            "owner": "skyze",
+            "category": "Library",
+            "versions": [
+              {
+                "version": "${{ steps.version.outputs.VERSION }}",
+                "changelog": "Release ${{ steps.version.outputs.VERSION }}",
+                "targetAbi": "10.11.0.0",
+                "sourceUrl": "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ignore-empty-folders-${{ steps.version.outputs.VERSION }}.zip",
+                "checksum": "$(sha256sum Jellyfin.Plugin.IgnoreEmptyFolders/bin/Release/net9.0/Jellyfin.Plugin.IgnoreEmptyFolders.dll | cut -d' ' -f1)",
+                "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+              }
+            ]
+          }
+          EOF
+
+      - name: Package release
+        run: |
+          mkdir -p staging
+          cp Jellyfin.Plugin.IgnoreEmptyFolders/bin/Release/net9.0/Jellyfin.Plugin.IgnoreEmptyFolders.dll staging/
+          cp meta.json staging/
+          cd staging
+          zip -r ../ignore-empty-folders-${{ steps.version.outputs.VERSION }}.zip .
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Ignore Empty Folders ${{ steps.version.outputs.VERSION }}
+          generate_release_notes: true
+          files: |
+            ignore-empty-folders-${{ steps.version.outputs.VERSION }}.zip
+            staging/meta.json
